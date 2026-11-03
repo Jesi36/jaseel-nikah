@@ -310,7 +310,7 @@ html{scroll-behavior:smooth}
     <div class="bismillah" lang="ar">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
     <svg class="sprig" aria-hidden="true"><use href="#sprig"/></svg>
     <div class="eyebrow">Nikah &amp; Reception</div>
-    <p class="lede">With joy and gratitude, we invite you to celebrate the marriage of</p>
+    <p class="lede">With the blessings of Allah, we cordially invite you to the Nikah of our beloved son</p>
     <div class="couple">
       <div class="person">
         <h2 class="names">Jaseel K M</h2>
@@ -384,19 +384,29 @@ html{scroll-behavior:smooth}
     musicBtn.classList.toggle("playing", playing);
     musicBtn.setAttribute("aria-label", playing ? "Pause music" : "Play music");
   }
-  function startMusic(){
-    bgm.volume = 0;
+  var BACKUP_MUSIC = "https://jn-nikkah-invitation.vercel.app/music.mp3";
+  var triedBackup = false;
+  function playNow(){
     var p = bgm.play();
     if (p && p.then) {
       p.then(function(){
         musicBtn.hidden = false; setMusicUI(true);
-        var v = 0, fade = setInterval(function(){ v += 0.05; bgm.volume = Math.min(0.7, v); if (v >= 0.7) clearInterval(fade); }, 120);
-      }).catch(function(){});
+        var v = 0, fade = setInterval(function(){ v += 0.05; try { bgm.volume = Math.min(0.7, v); } catch(e){} if (v >= 0.7) clearInterval(fade); }, 120);
+      }).catch(function(){
+        /* Browser blocked autoplay or file failed: show the button so the guest can tap to play */
+        musicBtn.hidden = false; setMusicUI(false);
+      });
     }
   }
-  bgm.addEventListener("error", function(){ musicBtn.hidden = true; });
+  function startMusic(){
+    try { bgm.volume = 0; } catch(e){}
+    playNow();
+  }
+  bgm.addEventListener("error", function(){
+    if (!triedBackup) { triedBackup = true; bgm.src = BACKUP_MUSIC; bgm.load(); if (cover.classList.contains("open")) playNow(); }
+  });
   musicBtn.addEventListener("click", function(){
-    if (bgm.paused) { bgm.play().then(function(){ setMusicUI(true); }).catch(function(){}); }
+    if (bgm.paused) { try { bgm.volume = 0.7; } catch(e){} bgm.play().then(function(){ setMusicUI(true); }).catch(function(){}); }
     else { bgm.pause(); setMusicUI(false); }
   });
 
